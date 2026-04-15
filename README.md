@@ -1,107 +1,118 @@
 
 
-# ⚙️ PMSM Fault Detection using Deep Learning & ML
+# 📊 PMSM Fault Detection using CNN & XGBoost
 
-## 📌 Project Overview
+## 🧠 Project Overview
 
-This project implements a **real-time fault detection framework for a Permanent Magnet Synchronous Motor (PMSM)** using electrical signal data. The goal is to classify motor health conditions and detect faults early for predictive maintenance in industrial systems.
+This project builds a **real-time digital twin framework for PMSM (Permanent Magnet Synchronous Motor) fault detection** using machine learning and deep learning. The goal is to classify motor health conditions from raw electrical current signals and enable predictive maintenance.
 
-The system is trained on a large dataset of motor current signals and compares multiple machine learning approaches including **XGBoost and 1D CNNs**, along with feature engineering techniques like FFT and hybrid time-frequency representations.
-
----
-
-## 📊 Dataset
-
-* Source: Mendeley Dataset (PMSM motor signals)
-* Total samples: **480,000 sliding windows**
-* Window size: **256 time-steps**
-* Input: Phase current signal (primarily `ai0`)
-* Classes (4):
-
-  * Healthy
-  * Inter-turn fault
-  * Inter-coil fault
-  * Coil fault
+The dataset consists of **480,000 sliding windows (length = 256 samples)** derived from phase current signals collected under different operating conditions (speed, load, and fault scenarios).
 
 ---
 
-## ⚙️ Feature Engineering
+## ⚙️ Motor Conditions & Classes
 
-* Raw time-domain signal windows (256-length)
-* FFT-based frequency features
-* Hybrid time-frequency representations (experimental)
-* Normalization and segmentation into fixed windows
+The model classifies motor states into **4 categories**:
+
+* **0 → Healthy motor**
+* **1 → Interturn fault**
+* **2 → Intercoil fault**
+* **3 → Coil fault**
 
 ---
 
-## 🤖 Models Implemented
+## 📦 Dataset
 
-### 1. XGBoost Classifier
+* Source: [https://data.mendeley.com/datasets/rgn5brrgrn/5](https://data.mendeley.com/datasets/rgn5brrgrn/5)
+* Input: Phase current signal (AI0 channel from TDMS data)
+* Shape: `(480,000 samples → 256-point windows)`
+* Preprocessing: normalization + windowing + optional FFT/hybrid features
 
-* Best accuracy: ~**74%**
-* Strong baseline for structured features
-* Limited performance on raw temporal dependencies
+---
 
-### 2. 1D Convolutional Neural Network (CNN)
+## 🏗️ Models Used
 
-* Input: (256 × 1) raw signal windows
+### 1. XGBoost (Baseline ML Model)
+
+* Handcrafted + FFT-based features
+* Accuracy: ~74%
+* Strong baseline but limited temporal understanding
+
+### 2. 1D Convolutional Neural Network (Final Model)
+
+* Input: raw 256-length signal windows
+
 * Architecture:
 
-  * Conv1D + BatchNorm + MaxPooling layers
-  * Global Average Pooling
-  * Dense layers with Dropout
-* Final model uses:
+  * Conv1D → BatchNorm → MaxPooling (x2)
+  * Conv1D (256 filters)
+  * GlobalAveragePooling
+  * Dense + Dropout
+  * Softmax (4 classes)
 
-  * **Class weighting to handle imbalance**
-  * Improved deeper architecture
-* Best accuracy: ~**86%**
+* Training improvements:
 
----
+  * Class weighting (to handle imbalance)
+  * Adam optimizer (lr = 0.0005)
+  * Early stopping + best model checkpoint
 
-## 📈 Results Summary
-
-* Overall best model: **Improved CNN (86% accuracy)**
-* Strong class-wise performance:
-
-  * Coil faults: ~100% detection accuracy
-  * Healthy / Inter-turn / Inter-coil: moderate confusion
-* Main challenge: distinguishing **inter-turn vs inter-coil faults**
+* Final Accuracy: **~86%**
 
 ---
 
-## 🧠 Key Observations
+## 📈 Key Results
 
-* Deep learning (CNN) outperforms classical ML (XGBoost) for raw signal data
-* Class imbalance significantly affects minority fault detection
-* Time-domain CNN features outperform FFT-only approaches
-* Model improves significantly with:
+| Model       | Accuracy | Notes                 |
+| ----------- | -------- | --------------------- |
+| XGBoost     | ~74%     | Feature-based         |
+| CNN (v1)    | ~71%     | Initial architecture  |
+| CNN (final) | **~86%** | Balanced + deeper CNN |
 
-  * Class weights
-  * Deeper convolutional architecture
-  * Batch normalization
+### Key Observations
+
+* Coil faults are easiest to detect (near-perfect recall)
+* Interturn vs intercoil confusion remains the hardest challenge
+* CNN significantly outperforms classical ML when trained on raw sequences
 
 ---
 
-## 💾 Files in Repository
+## 📉 Confusion Behavior
 
-* `PMSM_X.npy`, `PMSM_y.npy` → dataset
-* `cnn_model.keras` → trained CNN model
+* Strong performance on **Healthy & Coil faults**
+* Most misclassification occurs between:
+
+  * Interturn ↔ Intercoil faults
+
+---
+
+## 💾 Saved Models
+
+* `cnn_model.keras` → trained deep learning model
 * `xgb_model.pkl` → trained XGBoost model
-* Notebooks → preprocessing, training, evaluation
+* Best CNN checkpoint saved during training via ModelCheckpoint
 
 ---
 
-## 🚀 Future Work
+## 🚀 How to Run
 
-* Real-time deployment using edge devices (Raspberry Pi / embedded system)
-* Attention-based deep learning models (CNN-LSTM / Transformers)
-* Improved separation of inter-turn and inter-coil faults
-* Integration into full digital twin framework
+1. Load dataset (`.npy` files)
+2. Reshape into `(samples, 256, 1)`
+3. Load saved models from Google Drive
+4. Run inference directly without retraining
 
 ---
 
-## 📌 Conclusion
+## 🔮 Future Improvements
 
-This project demonstrates a complete pipeline for PMSM fault detection using machine learning and deep learning techniques. The CNN-based approach shows strong potential for real-world predictive maintenance systems in industrial motor monitoring applications.
+* Add LSTM/Transformer-based temporal modeling
+* Improve separation of interturn vs intercoil faults
+* Deploy as real-time monitoring system (Raspberry Pi / edge device)
+* Expand to multi-sensor IMU + current fusion
+
+---
+
+## 📌 Summary
+
+This project demonstrates a complete pipeline for **PMSM fault detection using deep learning**, progressing from feature-based ML models to a robust CNN-based architecture capable of learning directly from raw motor current signals.
 
 ---
